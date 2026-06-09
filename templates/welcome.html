@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container" style="text-align: center;">
+    <h1>Welcome to the Stutter-Sath Website</h1>
+    <p>Transform your speech. Transform your confidence.</p>
+    <a class="btn" href="{{ url_for('register') }}">Get Started</a>
+    <a class="btn" href="{{ url_for('login') }}">Login</a>
+  </div>
+</body>
+</html>

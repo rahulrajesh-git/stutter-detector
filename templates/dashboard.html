@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-container">
+    <div class="dashboard-sidebar">
+      <h2 class="username">{{ user.username }}</h2><br>
+      <strong>Level: {{ level }}</strong><br>
+      <strong>Score: {{ score }}</strong>
+      <a href="{{ url_for('logout') }}" class="btn" style="background:#cc0000; color:white; display:block; text-align:center;">
+        Logout
+      </a>
+    </div>
+
+    <div class="dashboard-main">
+      <h1 class="dashboard-title">Ready to Practice?</h1>
+
+      <div id="sentence-box" style="margin: 20px 0; font-size: 1.2em; color: #f6f3f3;">
+        {% if sentence %}
+          <strong>Sentence:</strong> {{ sentence.text }}
+          <input type="hidden" name="sentence_id" id="sentence_id" value="{{ sentence.id }}">
+        {% else %}
+          <em>No sentence available for this level.</em>
+        {% endif %}
+      </div>
+
+      <p id="timer">00:00</p>
+      <button onclick="startRecording()">Start</button>
+      <button onclick="stopRecording()">Stop</button>
+      <audio id="audioPlayback" controls></audio>
+      <br>
+      <textarea id="outputBox" rows="3" cols="50" readonly></textarea>
+    </div>
+  </div>
+
+<script>
+let mediaRecorder;
+let audioChunks = [];
+let seconds = 0;
+let timerInterval = null;
+
+function startRecording() {
+  audioChunks = [];
+  seconds = 0;
+  document.getElementById("outputBox").value = "Recording...";
+  document.getElementById("timer").innerText = "00:00";
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.start();
+
+    timerInterval = setInterval(() => {
+      seconds++;
+      let min = String(Math.floor(seconds / 60)).padStart(2, '0');
+      let sec = String(seconds % 60).padStart(2, '0');
+      document.getElementById("timer").innerText = `${min}:${sec}`;
+    }, 1000);
+
+    mediaRecorder.ondataavailable = e => {
+      audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioURL = URL.createObjectURL(blob);
+      document.getElementById("audioPlayback").src = audioURL;
+
+      const formData = new FormData();
+      formData.append("audio", blob, "recording.webm");
+      const sentenceId = document.getElementById("sentence_id").value;
+      formData.append("sentence_id", sentenceId);
+
+      fetch("/upload-audio", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("outputBox").value = data.result;
+
+        if (data.status === "fluent") {
+          document.getElementById("outputBox").value += "\nLoading next sentence...";
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);  // Wait 2 seconds then reload dashboard
+        }
+      })
+      .catch(err => {
+        console.error("Upload failed", err);
+        document.getElementById("outputBox").value = "Upload failed.";
+      });
+    };
+  });
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    clearInterval(timerInterval);
+    document.getElementById("timer").innerText = "00:00";
+    seconds = 0;
+  }
+}
+</script>
+</body>
+</html>

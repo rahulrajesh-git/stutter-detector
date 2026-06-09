@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2 style="text-align:center;">Create an Account</h2>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        {{ form.username.label }}<br>{{ form.username }}
+      </div>
+      <div class="form-group">
+        {{ form.email.label }}<br>{{ form.email }}
+      </div>
+      <div class="form-group">
+        {{ form.password.label }}<br>{{ form.password }}
+      </div>
+      <div class="form-group">
+        {{ form.confirm_password.label }}<br>{{ form.confirm_password }}
+      </div>
+      {{ form.submit(class_="btn") }}
+    </form>
+    <p style="text-align:center;">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+  </div>
+</body>
+</html>
